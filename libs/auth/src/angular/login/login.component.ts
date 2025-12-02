@@ -169,6 +169,13 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   private async defaultOnInit(): Promise<void> {
+    // Check if SSO only mode is enabled, if so redirect to SSO
+    const serverSettings = await firstValueFrom(this.configService.serverSettings$);
+    if (serverSettings?.ssoOnly === true) {
+      await this.router.navigate(["/sso"]);
+      return;
+    }
+
     let paramEmailIsSet = false;
 
     const params = await firstValueFrom(this.activatedRoute.queryParams);

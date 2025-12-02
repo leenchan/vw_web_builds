@@ -153,6 +153,7 @@ export abstract class ApiService {
   abstract postEmail(request: EmailRequest): Promise<any>;
   abstract postSetKeyConnectorKey(request: SetKeyConnectorKeyRequest): Promise<any>;
   abstract postSecurityStamp(request: SecretVerificationRequest): Promise<any>;
+  abstract postLogout(): Promise<any>;
   abstract getAccountRevisionDate(): Promise<number>;
   abstract postPasswordHint(request: PasswordHintRequest): Promise<any>;
   abstract postPremium(data: FormData): Promise<PaymentResponse>;

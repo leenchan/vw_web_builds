@@ -308,6 +308,10 @@ export class ApiService implements ApiServiceAbstraction {
     return this.send("POST", "/accounts/security-stamp", request, true, false);
   }
 
+  postLogout(): Promise<any> {
+    return this.send("POST", "/accounts/logout", null, true, false);
+  }
+
   async getAccountRevisionDate(): Promise<number> {
     const r = await this.send("GET", "/accounts/revision-date", null, true, true);
     return r as number;

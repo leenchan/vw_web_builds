@@ -28,6 +28,7 @@ import { KeyConnectorService } from "@bitwarden/common/key-management/key-connec
 import { InternalMasterPasswordServiceAbstraction } from "@bitwarden/common/key-management/master-password/abstractions/master-password.service.abstraction";
 import { ErrorResponse } from "@bitwarden/common/models/response/error.response";
 import { ListResponse } from "@bitwarden/common/models/response/list.response";
+import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -89,6 +90,7 @@ export class SsoComponent implements OnInit {
   protected codeChallenge: string | undefined;
   protected clientId: SsoClientType | undefined;
   protected email: string | null | undefined;
+  protected showIdentifierInput = true;
 
   formPromise: Promise<AuthResult> | undefined;
   initiateSsoFormPromise: Promise<SsoPreValidateResponse> | undefined;
@@ -118,6 +120,7 @@ export class SsoComponent implements OnInit {
     private ssoComponentService: SsoComponentService,
     private loginSuccessHandlerService: LoginSuccessHandlerService,
     private keyConnectorService: KeyConnectorService,
+    private configService: ConfigService,
   ) {
     environmentService.environment$.pipe(takeUntilDestroyed()).subscribe((env) => {
       this.redirectUri = env.getWebVaultUrl() + "/sso-connector.html";
@@ -147,6 +150,13 @@ export class SsoComponent implements OnInit {
     // We also can't require the email, because it isn't provided in the CLI SSO flow.
     this.email = qParams.email ?? (await this.ssoLoginService.getSsoEmail());
 
+    // Check if ssoClientId is configured, if so use it and hide the identifier input
+    const serverSettings = await firstValueFrom(this.configService.serverSettings$);
+    if (serverSettings?.ssoClientId && serverSettings.ssoClientId.trim() !== "") {
+      this.identifierFormControl.setValue(serverSettings.ssoClientId);
+      this.showIdentifierInput = false;
+    }
+
     // Detect if we are on the second portion of the SSO flow,
     // where the user has already authenticated with the identity provider
     if (this.userCompletedSsoAuthentication(qParams)) {
@@ -173,7 +183,10 @@ export class SsoComponent implements OnInit {
 
     // Try to determine the identifier using claimed domain or local state
     // persisted from the user's last login attempt.
-    await this.initializeIdentifierFromEmailOrStorage();
+    // Only do this if we haven't already set the identifier from ssoClientId
+    if (this.showIdentifierInput) {
+      await this.initializeIdentifierFromEmailOrStorage();
+    }
   }
 
   /**

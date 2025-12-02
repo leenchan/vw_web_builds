@@ -8,6 +8,7 @@ import { Subject, filter, firstValueFrom, map, timeout } from "rxjs";
 import { CollectionService } from "@bitwarden/admin-console/common";
 import { DeviceTrustToastService } from "@bitwarden/angular/auth/services/device-trust-toast.service.abstraction";
 import { DocumentLangSetter } from "@bitwarden/angular/platform/i18n";
+import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { EventUploadService } from "@bitwarden/common/abstractions/event/event-upload.service";
 import { InternalOrganizationServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
@@ -74,6 +75,7 @@ export class AppComponent implements OnDestroy, OnInit {
     private readonly destroy: DestroyRef,
     private readonly documentLangSetter: DocumentLangSetter,
     private readonly tokenService: TokenService,
+    private readonly apiService: ApiService,
   ) {
     this.deviceTrustToastService.setupListeners$.pipe(takeUntilDestroyed()).subscribe();
 
@@ -263,6 +265,15 @@ export class AppComponent implements OnDestroy, OnInit {
     ]);
 
     await this.stateEventRunnerService.handleEvent("logout", userId);
+
+    // Call backend logout endpoint to delete device and logout from Keycloak if SSO is enabled
+    try {
+      await this.apiService.postLogout();
+    } catch (e) {
+      // Don't fail logout if API call fails - user is already logged out locally
+      // eslint-disable-next-line no-console
+      console.error(e);
+    }
 
     await this.searchService.clearIndex(userId);
     this.authService.logOut(async () => {

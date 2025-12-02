@@ -4,7 +4,7 @@
     {{ "loading" | i18n }}
   </div>
   <div *ngIf="!loggingIn">
-    <bit-form-field>
+    <bit-form-field *ngIf="showIdentifierInput">
       <bit-label>{{ "ssoIdentifier" | i18n }}</bit-label>
       <input bitInput type="text" formControlName="identifier" appAutofocus />
     </bit-form-field>
