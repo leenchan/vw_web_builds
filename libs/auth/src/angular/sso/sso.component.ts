@@ -159,15 +159,14 @@ export class SsoComponent implements OnInit {
     }
 
     // Check if ssoClientId is configured in server settings
-    // If so, use it as the identifier and automatically submit SSO flow
+    // If so, use it as the identifier but don't automatically submit
     const serverSettings = await firstValueFrom(this.configService.serverSettings$);
     if (serverSettings?.ssoClientId && serverSettings.ssoClientId.trim() !== "") {
       // Use ssoClientId as the identifier and hide the input field
       this.identifierFormControl.setValue(serverSettings.ssoClientId);
       this.showIdentifierInput = false;
-      // Automatically submit SSO flow when ssoClientId is configured (similar to URL identifier parameter)
-      this.loggingIn = true;
-      await this.submit();
+      // Don't automatically submit - wait for user to click Continue button
+      // Note: Continue button will still be shown even when showIdentifierInput is false
       return;
     }
 
@@ -179,12 +178,10 @@ export class SsoComponent implements OnInit {
     }
 
     // Detect if we have landed here with an SSO identifier in the URL.
-    // This is used by integrations that want to "short-circuit" the login to send users
-    // directly to their IdP to simulate IdP-initiated SSO, so we submit automatically.
+    // Pre-fill the identifier but don't automatically submit - wait for user to click Continue button.
     if (qParams.identifier != null) {
       this.identifierFormControl.setValue(qParams.identifier);
-      this.loggingIn = true;
-      await this.submit();
+      // Don't automatically submit - wait for user to click Continue button
       return;
     }
 
@@ -637,7 +634,7 @@ export class SsoComponent implements OnInit {
 
         if (response.data.length > 0) {
           this.identifierFormControl.setValue(response.data[0].organizationIdentifier);
-          await this.submit();
+          // Don't automatically submit - wait for user to click Continue button
           return;
         }
       } catch (error) {

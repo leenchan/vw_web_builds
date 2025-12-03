@@ -8,7 +8,7 @@
       <bit-label>{{ "ssoIdentifier" | i18n }}</bit-label>
       <input bitInput type="text" formControlName="identifier" appAutofocus />
     </bit-form-field>
-    <div class="tw-flex tw-gap-2" *ngIf="showIdentifierInput">
+    <div class="tw-flex tw-gap-2">
       <button type="submit" bitButton bitFormButton buttonType="primary" [block]="true">
         {{ "continue" | i18n }}
       </button>
