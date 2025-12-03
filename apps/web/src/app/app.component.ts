@@ -9,6 +9,7 @@ import { CollectionService } from "@bitwarden/admin-console/common";
 import { DeviceTrustToastService } from "@bitwarden/angular/auth/services/device-trust-toast.service.abstraction";
 import { DocumentLangSetter } from "@bitwarden/angular/platform/i18n";
 import { LockService } from "@bitwarden/auth/common";
+import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { EventUploadService } from "@bitwarden/common/abstractions/event/event-upload.service";
 import { InternalOrganizationServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization.service.abstraction";
 import { AccountService } from "@bitwarden/common/auth/abstractions/account.service";
@@ -77,6 +78,7 @@ export class AppComponent implements OnDestroy, OnInit {
     private readonly documentLangSetter: DocumentLangSetter,
     private readonly tokenService: TokenService,
     private readonly routerFocusManager: RouterFocusManagerService,
+    private readonly apiService: ApiService,
   ) {
     this.deviceTrustToastService.setupListeners$.pipe(takeUntilDestroyed()).subscribe();
 
@@ -240,6 +242,19 @@ export class AppComponent implements OnDestroy, OnInit {
 
     await this.eventUploadService.uploadEvents();
     const userId = await firstValueFrom(getUserId(this.accountService.activeAccount$));
+
+    // Call backend logout API before clearing local state
+    // This will logout from Keycloak if SSO is enabled and delete the device
+    try {
+      const refreshToken = await this.tokenService.getRefreshToken(userId);
+      if (refreshToken) {
+        await this.apiService.postLogout(refreshToken);
+      }
+    } catch (error) {
+      // Don't fail logout if API call fails - continue with local cleanup
+      // eslint-disable-next-line no-console
+      console.error("Failed to call logout API:", error);
+    }
 
     const logoutPromise = firstValueFrom(
       this.authService.authStatusFor$(userId).pipe(

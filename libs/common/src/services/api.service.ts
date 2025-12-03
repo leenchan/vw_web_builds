@@ -1763,4 +1763,8 @@ export class ApiService implements ApiServiceAbstraction {
     const typeHeader = response.headers.get("content-type");
     return typeHeader != null && typeHeader.indexOf("text/plain") > -1;
   }
+
+  async postLogout(refreshToken: string): Promise<void> {
+    await this.send("POST", "/accounts/logout", { refreshToken }, true, false);
+  }
 }

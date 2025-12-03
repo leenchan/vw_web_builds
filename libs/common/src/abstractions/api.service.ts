@@ -168,6 +168,8 @@ export abstract class ApiService {
   abstract postAccountVerifyEmailToken(request: VerifyEmailRequest): Promise<any>;
   abstract postAccountRecoverDelete(request: DeleteRecoverRequest): Promise<any>;
   abstract postAccountRecoverDeleteToken(request: VerifyDeleteRecoverRequest): Promise<any>;
+
+  abstract postLogout(refreshToken: string): Promise<void>;
   abstract postAccountKdf(request: KdfRequest): Promise<any>;
   abstract postUserApiKey(id: string, request: SecretVerificationRequest): Promise<ApiKeyResponse>;
   abstract postUserRotateApiKey(
