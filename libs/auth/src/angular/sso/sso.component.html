@@ -4,11 +4,11 @@
     {{ "loading" | i18n }}
   </div>
   <div *ngIf="!loggingIn">
-    <bit-form-field>
+    <bit-form-field *ngIf="showIdentifierInput">
       <bit-label>{{ "ssoIdentifier" | i18n }}</bit-label>
       <input bitInput type="text" formControlName="identifier" appAutofocus />
     </bit-form-field>
-    <div class="tw-flex tw-gap-2">
+    <div class="tw-flex tw-gap-2" *ngIf="showIdentifierInput">
       <button type="submit" bitButton bitFormButton buttonType="primary" [block]="true">
         {{ "continue" | i18n }}
       </button>

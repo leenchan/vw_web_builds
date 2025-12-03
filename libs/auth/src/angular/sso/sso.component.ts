@@ -28,6 +28,7 @@ import { KeyConnectorService } from "@bitwarden/common/key-management/key-connec
 import { InternalMasterPasswordServiceAbstraction } from "@bitwarden/common/key-management/master-password/abstractions/master-password.service.abstraction";
 import { ErrorResponse } from "@bitwarden/common/models/response/error.response";
 import { ListResponse } from "@bitwarden/common/models/response/list.response";
+import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -89,6 +90,7 @@ export class SsoComponent implements OnInit {
   protected codeChallenge: string | undefined;
   protected clientId: SsoClientType | undefined;
   protected email: string | null | undefined;
+  protected showIdentifierInput = true;
 
   formPromise: Promise<AuthResult> | undefined;
   initiateSsoFormPromise: Promise<SsoPreValidateResponse> | undefined;
@@ -118,6 +120,7 @@ export class SsoComponent implements OnInit {
     private ssoComponentService: SsoComponentService,
     private loginSuccessHandlerService: LoginSuccessHandlerService,
     private keyConnectorService: KeyConnectorService,
+    private configService: ConfigService,
   ) {
     environmentService.environment$.pipe(takeUntilDestroyed()).subscribe((env) => {
       this.redirectUri = env.getWebVaultUrl() + "/sso-connector.html";
@@ -149,8 +152,22 @@ export class SsoComponent implements OnInit {
 
     // Detect if we are on the second portion of the SSO flow,
     // where the user has already authenticated with the identity provider
+    // This must be checked first before any auto-submit logic
     if (this.userCompletedSsoAuthentication(qParams)) {
       await this.handleTokenRequestForAuthenticatedUser(qParams);
+      return;
+    }
+
+    // Check if ssoClientId is configured in server settings
+    // If so, use it as the identifier and automatically submit SSO flow
+    const serverSettings = await firstValueFrom(this.configService.serverSettings$);
+    if (serverSettings?.ssoClientId && serverSettings.ssoClientId.trim() !== "") {
+      // Use ssoClientId as the identifier and hide the input field
+      this.identifierFormControl.setValue(serverSettings.ssoClientId);
+      this.showIdentifierInput = false;
+      // Automatically submit SSO flow when ssoClientId is configured (similar to URL identifier parameter)
+      this.loggingIn = true;
+      await this.submit();
       return;
     }
 
