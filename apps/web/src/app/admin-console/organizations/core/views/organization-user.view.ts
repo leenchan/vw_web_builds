@@ -28,6 +28,7 @@ export class OrganizationUserView {
    */
   accessSecretsManager: boolean;
   managedByOrganization: boolean;
+  enabled: boolean;
 
   collections: CollectionAccessSelectionView[] = [];
   groups: string[] = [];

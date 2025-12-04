@@ -976,6 +976,16 @@ export class MembersComponent extends BaseMembersComponent<OrganizationUserView>
       .every((member) => member.managedByOrganization && validStatuses.includes(member.status));
   }
 
+  getUserStatus(user: OrganizationUserView): string {
+    if (!user.enabled) {
+      return "Disabled";
+    }
+    if (user.hasMasterPassword) {
+      return "Active";
+    }
+    return "Inactive";
+  }
+
   async navigateToPaymentMethod(organization: Organization) {
     await this.router.navigate(
       ["organizations", `${organization.id}`, "billing", "payment-details"],
