@@ -1,6 +1,6 @@
 import { Component, computed, Signal } from "@angular/core";
 import { takeUntilDestroyed, toSignal } from "@angular/core/rxjs-interop";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import {
   combineLatest,
   concatMap,
@@ -121,6 +121,7 @@ export class MembersComponent extends BaseMembersComponent<OrganizationUserView>
     private organizationMetadataService: OrganizationMetadataServiceAbstraction,
     private configService: ConfigService,
     private environmentService: EnvironmentService,
+    private router: Router,
   ) {
     super(
       apiService,
@@ -592,5 +593,24 @@ export class MembersComponent extends BaseMembersComponent<OrganizationUserView>
     return this.dataSource
       .getCheckedUsers()
       .every((member) => member.managedByOrganization && validStatuses.includes(member.status));
+  }
+
+  getUserStatus(user: OrganizationUserView): string {
+    if (!user.enabled) {
+      return "Disabled";
+    }
+    if (user.hasMasterPassword) {
+      return "Active";
+    }
+    return "Inactive";
+  }
+
+  async navigateToPaymentMethod(organization: Organization) {
+    await this.router.navigate(
+      ["organizations", `${organization.id}`, "billing", "payment-details"],
+      {
+        state: { launchPaymentModalAutomatically: true },
+      },
+    );
   }
 }

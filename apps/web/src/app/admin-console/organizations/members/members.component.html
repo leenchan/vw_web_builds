@@ -101,6 +101,7 @@
               <th bitCell bitSortable="email" default>{{ "name" | i18n }}</th>
               <th bitCell>{{ (organization.useGroups ? "groups" : "collections") | i18n }}</th>
               <th bitCell bitSortable="type">{{ "role" | i18n }}</th>
+              <th bitCell>{{ "status" | i18n }}</th>
               <th bitCell>{{ "policies" | i18n }}</th>
               <th bitCell class="tw-w-10">
                 <button
@@ -329,6 +330,26 @@
                   {{ u.type | userType }}
                 </td>
               </ng-template>
+
+              <td bitCell class="tw-text-sm">
+                @switch (getUserStatus(u)) {
+                  @case ("Active") {
+                    <span bitBadge variant="success" class="tw-text-xs">
+                      {{ "active" | i18n }}
+                    </span>
+                  }
+                  @case ("Inactive") {
+                    <span bitBadge variant="secondary" class="tw-text-xs">
+                      {{ "inactive" | i18n }}
+                    </span>
+                  }
+                  @case ("Disabled") {
+                    <span bitBadge variant="danger" class="tw-text-xs">
+                      {{ "disabled" | i18n }}
+                    </span>
+                  }
+                }
+              </td>
 
               <td bitCell class="tw-text-muted">
                 <ng-container *ngIf="u.twoFactorEnabled">
