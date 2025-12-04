@@ -196,6 +196,13 @@ export abstract class BaseMembersComponent<UserView extends UserViewTypes> {
           throw new Error(result.error);
         }
       } catch (e) {
+        // Display error message from backend
+        const errorMessage = e?.message || e?.toString() || this.i18nService.t("errorOccurred");
+        this.toastService.showToast({
+          variant: "error",
+          title: this.i18nService.t("errorOccurred"),
+          message: errorMessage,
+        });
         this.validationService.showError(e);
         throw e;
       } finally {
@@ -240,6 +247,7 @@ export abstract class BaseMembersComponent<UserView extends UserViewTypes> {
       await confirmUser(publicKey);
     } catch (e) {
       this.logService.error(`Handled exception: ${e}`);
+      this.validationService.showError(e);
     }
   }
 }
