@@ -35,46 +35,54 @@
     </vault-cipher-form>
   </div>
   <ng-container bitDialogFooter>
-    <button *ngIf="showRestore" [bitAction]="restore" bitButton buttonType="primary" type="button">
-      {{ "restore" | i18n }}
-    </button>
-    <ng-container *ngIf="showEdit">
+    <div class="tw-contents" [hidden]="formConfig?.mode === 'partial-edit'">
       <button
+        *ngIf="showRestore"
+        [bitAction]="restore"
         bitButton
-        [bitAction]="switchToEdit"
         buttonType="primary"
         type="button"
-        [disabled]="disableEdit"
       >
-        {{ "edit" | i18n }}
+        {{ "restore" | i18n }}
       </button>
-    </ng-container>
-    <button
-      bitButton
-      type="submit"
-      form="cipherForm"
-      buttonType="primary"
-      #submitBtn
-      [hidden]="showCipherView || showRestore"
-    >
-      {{ "save" | i18n }}
-    </button>
-    <button bitButton type="button" buttonType="secondary" (click)="cancel()" *ngIf="showCancel">
-      {{ "cancel" | i18n }}
-    </button>
-    <button bitButton type="button" buttonType="secondary" (click)="cancel()" *ngIf="showClose">
-      {{ "close" | i18n }}
-    </button>
-    <div class="tw-ml-auto" *ngIf="showDelete">
+      <ng-container *ngIf="showEdit">
+        <button
+          bitButton
+          [bitAction]="switchToEdit"
+          buttonType="primary"
+          type="button"
+          [disabled]="disableEdit"
+        >
+          {{ "edit" | i18n }}
+        </button>
+      </ng-container>
       <button
-        bitIconButton="bwi-trash"
-        type="button"
-        buttonType="danger"
-        [label]="'delete' | i18n"
-        [bitAction]="delete"
-        [disabled]="!canDelete"
-        data-testid="delete-cipher-btn"
-      ></button>
+        bitButton
+        type="submit"
+        form="cipherForm"
+        buttonType="primary"
+        #submitBtn
+        [hidden]="showCipherView || showRestore"
+      >
+        {{ "save" | i18n }}
+      </button>
+      <button bitButton type="button" buttonType="secondary" (click)="cancel()" *ngIf="showCancel">
+        {{ "cancel" | i18n }}
+      </button>
+      <button bitButton type="button" buttonType="secondary" (click)="cancel()" *ngIf="showClose">
+        {{ "close" | i18n }}
+      </button>
+      <div class="tw-ml-auto" *ngIf="showDelete">
+        <button
+          bitIconButton="bwi-trash"
+          type="button"
+          buttonType="danger"
+          [label]="'delete' | i18n"
+          [bitAction]="delete"
+          [disabled]="!canDelete"
+          data-testid="delete-cipher-btn"
+        ></button>
+      </div>
     </div>
   </ng-container>
 </bit-dialog>
