@@ -14,6 +14,7 @@ import {
 // This import has been flagged as unallowed for this class. It may be involved in a circular dependency loop.
 // eslint-disable-next-line no-restricted-imports
 import { LogoutService } from "@bitwarden/auth/common";
+import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { OrganizationApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/organization/organization-api.service.abstraction";
 import { PolicyApiServiceAbstraction } from "@bitwarden/common/admin-console/abstractions/policy/policy-api.service.abstraction";
 import { PolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
@@ -69,6 +70,7 @@ export class SetInitialPasswordComponent implements OnInit {
     private accountService: AccountService,
     private activatedRoute: ActivatedRoute,
     private anonLayoutWrapperDataService: AnonLayoutWrapperDataService,
+    private apiService: ApiService,
     private dialogService: DialogService,
     private i18nService: I18nService,
     private logoutService: LogoutService,
@@ -162,28 +164,43 @@ export class SetInitialPasswordComponent implements OnInit {
       return;
     }
 
-    const qParams = await firstValueFrom(this.activatedRoute.queryParams);
+    // Get user's actual organizations from backend (users_organizations table)
+    // instead of using URL parameter or SSO identifier which might be SSO client ID
+    try {
+      const profile = await this.apiService.getProfile();
 
-    this.orgSsoIdentifier =
-      qParams.identifier ??
-      (await this.ssoLoginService.getActiveUserOrganizationSsoIdentifier(this.userId));
+      // Get the first organization from the user's organizations list
+      // Backend's find_main_user_org orders by atype ascending, so first org is the main one
+      if (profile.organizations && profile.organizations.length > 0) {
+        const mainOrg = profile.organizations[0];
+        this.orgId = mainOrg.id;
+        // Use org identifier if available, otherwise fallback to org ID
+        // Backend returns identifier as null for self-hosted, so we use org ID
+        this.orgSsoIdentifier = mainOrg.identifier || mainOrg.id;
 
-    if (this.orgSsoIdentifier != null) {
-      try {
+        // Use orgSsoIdentifier to get auto-enroll status (can be org ID or identifier)
         const autoEnrollStatus = await this.organizationApiService.getAutoEnrollStatus(
           this.orgSsoIdentifier,
         );
-        this.orgId = autoEnrollStatus.id;
         this.resetPasswordAutoEnroll = autoEnrollStatus.resetPasswordEnabled;
         this.masterPasswordPolicyOptions =
           await this.policyApiService.getMasterPasswordPolicyOptsForOrgUser(this.orgId);
-      } catch {
+      } else {
+        // User has no organizations - this should not happen for invited users
+        this.logService.error("User has no organizations. Cannot set initial password.");
         this.toastService.showToast({
           variant: "error",
           title: "",
           message: this.i18nService.t("errorOccurred"),
         });
       }
+    } catch (error) {
+      this.logService.error("Failed to get user organizations from backend", error);
+      this.toastService.showToast({
+        variant: "error",
+        title: "",
+        message: this.i18nService.t("errorOccurred"),
+      });
     }
   }
 

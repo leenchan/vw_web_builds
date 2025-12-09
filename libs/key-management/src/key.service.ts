@@ -370,18 +370,24 @@ export class DefaultKeyService implements KeyServiceAbstraction {
       const encOrgKeyData: { [orgId: string]: EncryptedOrganizationKeyData } = {};
 
       for (const org of orgs) {
-        encOrgKeyData[org.id] = {
-          type: "organization",
-          key: org.key,
-        };
+        // Skip organizations with null or empty key to prevent EncString parsing errors
+        if (org.key != null && org.key !== "") {
+          encOrgKeyData[org.id] = {
+            type: "organization",
+            key: org.key,
+          };
+        }
       }
 
       for (const org of providerOrgs) {
-        encOrgKeyData[org.id] = {
-          type: "provider",
-          providerId: org.providerId,
-          key: org.key,
-        };
+        // Skip provider organizations with null or empty key
+        if (org.key != null && org.key !== "") {
+          encOrgKeyData[org.id] = {
+            type: "provider",
+            providerId: org.providerId,
+            key: org.key,
+          };
+        }
       }
       return encOrgKeyData;
     });
