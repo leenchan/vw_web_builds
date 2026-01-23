@@ -28,6 +28,7 @@ import { KeyConnectorService } from "@bitwarden/common/key-management/key-connec
 import { InternalMasterPasswordServiceAbstraction } from "@bitwarden/common/key-management/master-password/abstractions/master-password.service.abstraction";
 import { ErrorResponse } from "@bitwarden/common/models/response/error.response";
 import { ListResponse } from "@bitwarden/common/models/response/list.response";
+import { ConfigService } from "@bitwarden/common/platform/abstractions/config/config.service";
 import { EnvironmentService } from "@bitwarden/common/platform/abstractions/environment.service";
 import { I18nService } from "@bitwarden/common/platform/abstractions/i18n.service";
 import { LogService } from "@bitwarden/common/platform/abstractions/log.service";
@@ -91,6 +92,7 @@ export class SsoComponent implements OnInit {
   protected codeChallenge: string | undefined;
   protected clientId: SsoClientType | undefined;
   protected email: string | null | undefined;
+  protected showIdentifierInput = true;
 
   formPromise: Promise<AuthResult> | undefined;
   initiateSsoFormPromise: Promise<SsoPreValidateResponse> | undefined;
@@ -120,6 +122,7 @@ export class SsoComponent implements OnInit {
     private ssoComponentService: SsoComponentService,
     private loginSuccessHandlerService: LoginSuccessHandlerService,
     private keyConnectorService: KeyConnectorService,
+    private configService: ConfigService,
   ) {
     environmentService.environment$.pipe(takeUntilDestroyed()).subscribe((env) => {
       this.redirectUri = env.getWebVaultUrl() + "/sso-connector.html";
@@ -171,6 +174,24 @@ export class SsoComponent implements OnInit {
       this.loggingIn = true;
       await this.submit();
       return;
+    }
+
+    try {
+      const env = await firstValueFrom(this.environmentService.environment$);
+      const configUrl = env.getApiUrl() + "/config";
+      const response = await fetch(configUrl);
+      if (response.ok) {
+        const config = await response.json();
+        if (config?.settings?.ssoClientId && config?.settings?.ssoClientId.trim() !== "") {
+          this.identifierFormControl.setValue(config.settings.ssoClientId);
+          this.showIdentifierInput = false;
+          this.loggingIn = true;
+          await this.submit();
+          return;
+        }
+      }
+    } catch (e) {
+      this.logService.error("Failed to fetch server config", e);
     }
 
     // Try to determine the identifier using claimed domain or local state

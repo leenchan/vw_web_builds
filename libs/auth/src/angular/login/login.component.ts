@@ -21,6 +21,7 @@ import {
   LoginSuccessHandlerService,
   PasswordLoginCredentials,
 } from "@bitwarden/auth/common";
+import { ApiService } from "@bitwarden/common/abstractions/api.service";
 import { InternalPolicyService } from "@bitwarden/common/admin-console/abstractions/policy/policy.service.abstraction";
 import { PolicyData } from "@bitwarden/common/admin-console/models/data/policy.data";
 import { MasterPasswordPolicyOptions } from "@bitwarden/common/admin-console/models/domain/master-password-policy-options";
@@ -101,6 +102,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   isKnownDevice = false;
   loginUiState: LoginUiState = LoginUiState.EMAIL_ENTRY;
   ssoRequired = false;
+  ssoOnly = false;
 
   formGroup = this.formBuilder.group(
     {
@@ -125,6 +127,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     private activatedRoute: ActivatedRoute,
     private anonLayoutWrapperDataService: AnonLayoutWrapperDataService,
     private appIdService: AppIdService,
+    private apiService: ApiService,
     private broadcasterService: BroadcasterService,
     private destroyRef: DestroyRef,
     private devicesApiService: DevicesApiServiceAbstraction,
@@ -175,6 +178,20 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   private async defaultOnInit(): Promise<void> {
+    // Fetch server config directly from API to get ssoOnly setting
+    try {
+      const env = await firstValueFrom(this.environmentService.environment$);
+      const configUrl = env.getApiUrl() + "/config";
+      const response = await fetch(configUrl);
+      if (response.ok) {
+        const config = await response.json();
+        this.ssoOnly = config?.settings?.ssoOnly ?? false;
+      }
+    } catch (e) {
+      this.logService.error("Failed to fetch server config", e);
+      this.ssoOnly = false;
+    }
+
     let paramEmailIsSet = false;
 
     const params = await firstValueFrom(this.activatedRoute.queryParams);
@@ -583,6 +600,11 @@ export class LoginComponent implements OnInit, OnDestroy {
    * @param event - The event object.
    */
   async handleSsoClick() {
+    // If SSO only mode is enabled, redirect to SSO login
+    if (this.ssoOnly) {
+      await this.loginComponentService.redirectToSsoLogin('sso@example.com');
+      return;
+    }
     // Make sure the email is valid
     const isEmailValid = this.validateEmail();
     if (!isEmailValid) {

@@ -12,8 +12,8 @@
 
 <form [bitSubmit]="submit" [formGroup]="formGroup">
   <div [ngClass]="{ 'tw-hidden': loginUiState !== LoginUiState.EMAIL_ENTRY }">
-    <!-- Email Address input -->
-    <bit-form-field>
+    <!-- Email Address input - hidden when ssoOnly -->
+    <bit-form-field *ngIf="!ssoOnly">
       <bit-label>{{ "emailAddress" | i18n }}</bit-label>
       <input
         type="email"
@@ -25,19 +25,10 @@
         (keyup.enter)="continuePressed()"
         [disabled]="ssoRequired"
       />
-      <input
-        type="email"
-        formControlName="email"
-        bitInput
-        appAutofocus
-        class="vw-email-sso"
-        (input)="onEmailInput($event)"
-        (keyup.enter)="handleSsoClick()"
-      />
     </bit-form-field>
 
-    <!-- Remember Email input -->
-    <bit-form-control>
+    <!-- Remember Email input - hidden when ssoOnly -->
+    <bit-form-control *ngIf="!ssoOnly">
       <input
         type="checkbox"
         formControlName="rememberEmail"
@@ -48,8 +39,9 @@
     </bit-form-control>
 
     <div class="tw-grid tw-gap-3">
-      <!-- Continue button (sso is disabled) -->
+      <!-- Continue button (sso is disabled) - hidden when ssoOnly -->
       <button
+        *ngIf="!ssoOnly"
         type="button"
         bitButton
         block
@@ -62,12 +54,12 @@
         {{ "continue" | i18n }}
       </button>
 
-      <!-- SSO button -->
+      <!-- SSO button - always shown, primary when ssoOnly -->
       <button
         type="button"
         bitButton
         block
-        [buttonType]="ssoRequired ? 'primary' : 'secondary'"
+        [buttonType]="ssoOnly || ssoRequired ? 'primary' : 'secondary'"
         class="vw-sso-login"
         (click)="handleSsoClick()"
       >
@@ -75,38 +67,41 @@
         {{ "useSingleSignOn" | i18n }}
       </button>
 
-      <div class="tw-text-center vw-or-text">{{ "or" | i18n }}</div>
+      <!-- Hidden when ssoOnly -->
+      <ng-container *ngIf="!ssoOnly">
+        <div class="tw-text-center vw-or-text">{{ "or" | i18n }}</div>
 
-      <!-- Button to Login with Passkey -->
-      <ng-container *ngIf="isLoginWithPasskeySupported()">
+        <!-- Button to Login with Passkey -->
+        <ng-container *ngIf="isLoginWithPasskeySupported()">
+          <button
+            type="button"
+            bitButton
+            block
+            buttonType="secondary"
+            class="vw-passkey-login"
+            (click)="handleLoginWithPasskeyClick()"
+            [bitTooltip]="ssoRequired ? ('yourOrganizationRequiresSingleSignOn' | i18n) : ''"
+            [addTooltipToDescribedby]="ssoRequired"
+            [disabled]="ssoRequired"
+          >
+            <i class="bwi bwi-passkey tw-mr-1" aria-hidden="true"></i>
+            {{ "logInWithPasskey" | i18n }}
+          </button>
+        </ng-container>
+
+        <!-- Other button (sso enabled and password or device login is still available) -->
         <button
           type="button"
           bitButton
           block
           buttonType="secondary"
-          class="vw-passkey-login"
-          (click)="handleLoginWithPasskeyClick()"
-          [bitTooltip]="ssoRequired ? ('yourOrganizationRequiresSingleSignOn' | i18n) : ''"
-          [addTooltipToDescribedby]="ssoRequired"
+          class="vw-other-login"
+          (click)="continuePressed()"
           [disabled]="ssoRequired"
         >
-          <i class="bwi bwi-passkey tw-mr-1" aria-hidden="true"></i>
-          {{ "logInWithPasskey" | i18n }}
+          {{ "other" | i18n }}
         </button>
       </ng-container>
-
-      <!-- Other button (sso enabled and password or device login is still available) -->
-      <button
-        type="button"
-        bitButton
-        block
-        buttonType="secondary"
-        class="vw-other-login"
-        (click)="continuePressed()"
-        [disabled]="ssoRequired"
-      >
-        {{ "other" | i18n }}
-      </button>
     </div>
   </div>
 
